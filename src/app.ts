@@ -3,6 +3,7 @@ import express, { json } from "express";
 import cors from "cors";
 import Connection from "./database/connection";
 import categoriesRoutes from "./routes/categories.routes";
+import wordRoutes from "./routes/word.routes";
 
 class App {
 
@@ -47,6 +48,7 @@ class App {
     routes = () => {
 
         this.express.use('/api', categoriesRoutes.router);
+        this.express.use('/api', wordRoutes.router);
 
     };
 
@@ -55,7 +57,7 @@ class App {
         this.express.listen(PORT, () => {
 
             console.log(`Server is running on port: ${PORT}, http://localhost:${PORT} \n`);
-            
+
         })
 
     };
