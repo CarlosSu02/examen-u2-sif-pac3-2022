@@ -3,8 +3,10 @@ import { Word } from "../models/word.model";
 import { validate } from "class-validator";
 import { CreateWordDto } from "../dtos/create_word.dto";
 import categoriesService from "./categories.service";
+import { Category } from "../models/category.model";
 
 interface IWords {
+    categoryName?: string,
     count: number,
     results: Word[]
 }
@@ -50,10 +52,13 @@ class WordsService {
         const searchAllWordsCategory = await Word.findAndCountAll({ attributes: ['id', 'name', 'categoryId'], 
                                                             where: { "categoryId": id },
                                                             order: [['id', 'ASC']] });
+        
+        const categoryName = await Category.findByPk(id).then(info => info?.name);                                                
 
         if (searchAllWordsCategory.count === 0) throw new Error('There are no words added!');
         
         return {
+            categoryName,
             count: searchAllWordsCategory.count,
             results: searchAllWordsCategory.rows
         };

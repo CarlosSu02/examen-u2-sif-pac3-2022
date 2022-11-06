@@ -6,6 +6,7 @@ import categoriesRoutes from "./routes/categories.routes";
 import wordRoutes from "./routes/word.routes";
 import categoryController from "./controllers/category.controller";
 import wordController from "./controllers/word.controller";
+import gameRoutes from "./routes/game.routes";
 
 class App {
 
@@ -35,11 +36,11 @@ class App {
 
         this.connection.connection.sync({ force: false })
             .then(() => {
-        
-                categoryController.createCategoriesFromArray();
-                wordController.createWordsFromArray();
                 
                 console.log('Connection has been established successfully.');
+
+                categoryController.createCategoriesFromArray();
+                wordController.createWordsFromArray();
             
             })
             .catch((error) => {
@@ -54,6 +55,7 @@ class App {
 
         this.express.use('/api', categoriesRoutes.router);
         this.express.use('/api', wordRoutes.router);
+        this.express.use('/api/game', gameRoutes.router);
 
     };
 
