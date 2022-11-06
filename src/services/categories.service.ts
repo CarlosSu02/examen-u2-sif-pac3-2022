@@ -3,11 +3,6 @@ import { CreateCategoryDto } from "../dtos/create_category.dto";
 import { Category } from "../models/category.model";
 import { validate } from "class-validator";
 
-interface ICategory {
-    name: string,
-    description?: string
-}
-
 interface ICategories {
     count: number,
     results: Category[]

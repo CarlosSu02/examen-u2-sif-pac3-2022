@@ -1,6 +1,4 @@
 
-import { CreateCategoryDto } from "../dtos/create_category.dto";
-import { Category } from "../models/category.model";
 import { Word } from "../models/word.model";
 import { validate } from "class-validator";
 import { CreateWordDto } from "../dtos/create_word.dto";

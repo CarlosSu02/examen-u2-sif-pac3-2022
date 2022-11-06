@@ -4,6 +4,8 @@ import cors from "cors";
 import Connection from "./database/connection";
 import categoriesRoutes from "./routes/categories.routes";
 import wordRoutes from "./routes/word.routes";
+import categoryController from "./controllers/category.controller";
+import wordController from "./controllers/word.controller";
 
 class App {
 
@@ -34,7 +36,10 @@ class App {
         this.connection.connection.sync({ force: false })
             .then(() => {
         
-                console.log('Connection has been established successfully.')
+                categoryController.createCategoriesFromArray();
+                wordController.createWordsFromArray();
+                
+                console.log('Connection has been established successfully.');
             
             })
             .catch((error) => {
