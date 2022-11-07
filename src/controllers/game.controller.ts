@@ -25,7 +25,11 @@ class GameController {
 
             const wordFromReq = req.body;
             const wordValidated: WordPetitionDto = plainToClass(WordPetitionDto, wordFromReq);
-            const word: string = await gameService.validationWord(wordValidated, statistic?.progress!).then(info => (info.word!).toLowerCase());
+            let messageValidated: string = statistic?.progress!;
+
+            if (messageValidated === undefined) messageValidated = 'game past finished...';
+
+            const word: string = await gameService.validationWord(wordValidated, messageValidated).then(info => (info.word!).toLowerCase());
 
             if (statistic === null) {
 
