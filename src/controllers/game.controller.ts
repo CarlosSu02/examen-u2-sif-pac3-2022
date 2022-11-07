@@ -6,7 +6,6 @@ import { Statistic } from '../models/game.model';
 import gameService from '../services/game.service';
 
 interface IStatistic {
-    word: string,
     progress: string,
     state: string,
     attempts: number,
@@ -20,11 +19,8 @@ class GameController {
     
         try {
 
-            // console.log(req.body.word.length);
             const word = (req.body.word).toLowerCase();
-
             const statistic = await this.getStatistic();
-            // console.log(statistic);
 
             if (statistic === null) {
 
@@ -53,7 +49,6 @@ class GameController {
                 if (secretWord === word) {
 
                     const sendGame: IStatistic = {
-                        word: statistic.word!,
                         progress: secretWord.split('').join(' '),
                         state: 'Winner',
                         attempts: attempts,
@@ -63,7 +58,10 @@ class GameController {
         
                     await this.updateStatistic(
                         id,
-                        sendGame
+                        {
+                            word: statistic.word!,
+                            ...sendGame
+                        }
                     );
 
                     return res.status(200).send(sendGame);
@@ -79,22 +77,17 @@ class GameController {
                     showWord[i] = word;
                     state++;
 
-                    console.log(showWord);
-
                 }
 
             }
 
-            // console.log(typeof (showWord.join(' ')));
-
             const updateShowWord = showWord.join(' ');
 
             if (state === 0) attempts--;
-            if (attempts === 0) completed = true, stateGame = 'Lost', message = `Send a new request to start a new game! \nThe word was ${secretWord}...`;
+            if (attempts === 0) completed = true, stateGame = 'Lost', message = `Send a new request to start a new game! The word was ${secretWord}...`;
             if (secretWord === updateShowWord.toString().replace(/\s+/g, '')) completed = true, stateGame = 'Winner', message = 'Send a new request to start a new game!';
 
             const sendGame: IStatistic = {
-                word: statistic.word!,
                 progress: updateShowWord,
                 state: stateGame,
                 attempts: attempts,
@@ -104,15 +97,11 @@ class GameController {
 
             await this.updateStatistic(
                 id,
-                sendGame
+                {
+                    word: statistic.word!,
+                    ...sendGame
+                }
             );
-
-            // const sendGame: IStatistic = {
-            //     word: updateStatistic.word,
-            //     progress: updateStatistic.progress,
-            //     attempts: updateStatistic.attempts,
-            //     completed: updateStatistic.completed
-            // }
  
             return res.status(200).send(sendGame);
             
@@ -151,12 +140,7 @@ class GameController {
 
             }
 
-            // console.log(attempts);
-            
-            // console.log(convertWord.join(' '));
-
             const info = {
-                word,
                 progress: showWord,
                 state: 'In progress...',
                 attempts,
@@ -164,7 +148,10 @@ class GameController {
                 message: 'Enter a letter!'
             }
 
-            await this.createStatistic(info);
+            await this.createStatistic({
+                word,
+                ...info
+            });
 
             return info;
 
@@ -195,20 +182,8 @@ class GameController {
 
         });
 
-        // gertWordsCategory.results.map(c =>
-            
-            // (wordsArray.push(""+c.name));
-
-        // );
-
         const word = wordsArray.filter((item) => item !== undefined).toString();
-        
-        // const word: string = await wordsService.getWordById(sortWord).then(info => info.name!);
-        // const words = await wordsService.getWordsCategory(1);
-        //     words.results.map(c=>
-                       
-        //             );
-
+    
         return word;
 
     };
@@ -249,10 +224,14 @@ class GameController {
         try {
 
             const statistic = await Statistic.findByPk(id);
-
-            // console.log(object);
             
-            statistic?.set(object);
+            statistic?.set({
+                word: object.word,
+                progress: object.progress,
+                state: object.state,
+                attempts: object.attempts,
+                completed: object.completed
+            });
             await statistic?.save();
 
             return statistic?.dataValues;
