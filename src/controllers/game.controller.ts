@@ -2,16 +2,130 @@
 import { Request, Response } from 'express';
 import categoriesService from '../services/categories.service';
 import wordsService from '../services/words.service';
+import { Statistic } from '../models/game.model';
+import gameService from '../services/game.service';
 
-import { AsyncLocalStorage } from 'async_hooks';
-const asyncLocalStorage: any = new AsyncLocalStorage();
+interface IStatistic {
+    word: string,
+    progress: string,
+    state: string,
+    attempts: number,
+    completed: boolean,
+    message?: string
+}
 
 class GameController {
 
-    reqId: number = 0;
-
     public getGameAhorcado = async (req: Request, res: Response) => {
     
+        try {
+
+            // console.log(req.body.word.length);
+            const word = (req.body.word).toLowerCase();
+
+            const statistic = await this.getStatistic();
+            // console.log(statistic);
+
+            if (statistic === null) {
+
+                const newGame = await this.newGame();
+
+                const sendGame: IStatistic = {
+                    ...newGame
+                }
+
+                return res.status(200).send(sendGame);
+
+            }
+
+            const id = statistic.id!;
+            const secretWord = (statistic.word!).toLowerCase();
+            const showWord = (statistic.progress!).replace(/\s+/g, '').split('');
+
+            let stateGame = statistic.state!;
+            let completed = statistic.completed!;
+            let attempts = statistic.attempts!;
+            let message = 'Enter a new letter!';
+            let state = 0;
+
+            if (word.length > 1) {
+
+                if (secretWord === word) {
+
+                    const sendGame: IStatistic = {
+                        word: statistic.word!,
+                        progress: secretWord.split('').join(' '),
+                        state: 'Winner',
+                        attempts: attempts,
+                        completed: true,
+                        message: 'Send a new request to start a new game!'
+                    }
+        
+                    await this.updateStatistic(
+                        id,
+                        sendGame
+                    );
+
+                    return res.status(200).send(sendGame);
+                    
+                }
+
+            }
+
+            for (let i = 0; i < secretWord!.length; i++) {
+                
+                if (secretWord[i] === word) {
+                    
+                    showWord[i] = word;
+                    state++;
+
+                    console.log(showWord);
+
+                }
+
+            }
+
+            // console.log(typeof (showWord.join(' ')));
+
+            const updateShowWord = showWord.join(' ');
+
+            if (state === 0) attempts--;
+            if (attempts === 0) completed = true, stateGame = 'Lost', message = `Send a new request to start a new game! \nThe word was ${secretWord}...`;
+            if (secretWord === updateShowWord.toString().replace(/\s+/g, '')) completed = true, stateGame = 'Winner', message = 'Send a new request to start a new game!';
+
+            const sendGame: IStatistic = {
+                word: statistic.word!,
+                progress: updateShowWord,
+                state: stateGame,
+                attempts: attempts,
+                completed: completed,
+                message
+            }
+
+            await this.updateStatistic(
+                id,
+                sendGame
+            );
+
+            // const sendGame: IStatistic = {
+            //     word: updateStatistic.word,
+            //     progress: updateStatistic.progress,
+            //     attempts: updateStatistic.attempts,
+            //     completed: updateStatistic.completed
+            // }
+ 
+            return res.status(200).send(sendGame);
+            
+        } catch (error) {
+            
+            return (error instanceof Error) ? res.status(400).send(error.message) : res.status(400).send(String(error));
+            
+        }
+
+    };
+    
+    public newGame = async (): Promise<string | any> => {
+
         try {
             
             const word: string = await this.getWordGame();
@@ -41,19 +155,24 @@ class GameController {
             
             // console.log(convertWord.join(' '));
 
-            const statusGame = await this.statusGame(word, attempts);
-
-            res.status(200).send({
-                attempts,
+            const info = {
                 word,
-                "secret-word": showWord,
-                statusGame
-            });
-            
+                progress: showWord,
+                state: 'In progress...',
+                attempts,
+                completed: false,
+                message: 'Enter a letter!'
+            }
+
+            await this.createStatistic(info);
+
+            return info;
+
+
         } catch (error) {
-            
-            (error instanceof Error) ? res.status(400).send(error.message) : res.status(400).send(String(error));
-            
+
+            return (error instanceof Error) ? console.log(error.message) : console.log(String(error));
+
         }
 
     };
@@ -63,96 +182,88 @@ class GameController {
         const countCategories: number = await categoriesService.getCategories().then(info => info.count);
         const sortCategory: number =  Math.floor(Math.random() * (countCategories) + 1);    
         
-        const countWordsCategory: number = await wordsService.getWordsCategory(sortCategory).then(info => info.count);
-        const sortWord: number =  Math.floor(Math.random() * (countWordsCategory) + 1);
+        const gertWordsCategory = await wordsService.getWordsCategory(sortCategory);
+        const sortWord: number =  Math.floor(Math.random() * (gertWordsCategory.count) + 1);
+
+        const wordsArray = gertWordsCategory.results.map((word, index) => { 
+            
+            if ((index + 1) === sortWord) {
+
+                return word.name;
+             
+            }
+
+        });
+
+        // gertWordsCategory.results.map(c =>
+            
+            // (wordsArray.push(""+c.name));
+
+        // );
+
+        const word = wordsArray.filter((item) => item !== undefined).toString();
         
-        const word: string = await wordsService.getWordById(sortWord).then(info => info.name!);
+        // const word: string = await wordsService.getWordById(sortWord).then(info => info.name!);
+        // const words = await wordsService.getWordsCategory(1);
+        //     words.results.map(c=>
+                       
+        //             );
 
         return word;
 
     };
 
-    performEvenMoreWork = async () => {
-        // performing even more work
-        console.log('performing work for', asyncLocalStorage.getStore());
-        let str = (asyncLocalStorage.getStore());
-        return str;
-    }
+    public getStatistic = async (): Promise<Statistic |  null> => {
 
-    performSomeWork = async () => {
-        // performing some work
-        return await this.performEvenMoreWork().then((data) => data);
-    }
-
-    statusGame = async(word: string, attempts: number): Promise<any> => { 
-
-        this.reqId++;
-        
-        const testing = asyncLocalStorage.run('info', () => { 
+        try {
             
-            return this.getData();
-            
-        });
-        console.log('asddsa', testing);
+            const statistic = await gameService.getStatistic();
 
-        // console.log(this.reqId);
+            return statistic;
+           
+        } catch (error) {
 
-        if (testing === undefined) {
-
-            let store = new Map();
-
-            asyncLocalStorage.run(store, () => {
-                
-                store.set("reqId", this.reqId);
-                store.set("attempts", attempts);
-                store.set("word", word);
-
-                // asyncLocalStorage.getStore().set("intentos", attempts);
-                // asyncLocalStorage.getStore().set("word", word);
-
-                // const dataDB = await Category.findAndCountAll().then(data => data.count);
-                // console.log(dataDB);
-            
-                // return ({
-
-                //     'intentos': attempts,
-                //     'counter': 'data!.toString()'
-
-                // });
-                
-                this.getData();
-
-            });
+            (error instanceof Error) ? console.log(error.message) : console.log(String(error));
+            return null;
 
         }
-        // this.getData();
 
-        // console.log(store);
-        
-        if (this.reqId === attempts) this.reqId = 0;
+    }
 
-        return 'test';
+    public createStatistic = async (object: any) => {
+    
+        try {
+            
+            await Statistic.create(object);
+           
+        } catch (error) {
+
+            return (error instanceof Error) ? console.log(error.message) : console.log(String(error));
+
+        }
 
     };
 
-    getData = () => {
+    public updateStatistic = async (id: number, object: any) => {
+    
+        try {
 
-        const info = asyncLocalStorage.getStore();
+            const statistic = await Statistic.findByPk(id);
 
-        console.log(typeof info);
+            // console.log(object);
+            
+            statistic?.set(object);
+            await statistic?.save();
 
-        if (info === 'info') return undefined;
+            return statistic?.dataValues;
+           
+        } catch (error) {
 
-        const reqIdM = info.get('reqId');
-        const attemptsM = info.get('attempts');
-        const wordM = info.get('word');
+            return (error instanceof Error) ? console.log(error.message) : console.log(String(error));
 
-        // console.log(reqIdM, attemptsM, wordM);
-        // console.log
+        }
 
-        return { reqIdM, attemptsM };
-
-    }
+    };
 
 }
 

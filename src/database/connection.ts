@@ -3,6 +3,7 @@ import { Sequelize } from 'sequelize-typescript';
 import 'dotenv/config';
 import { Category } from '../models/category.model';
 import { Word } from '../models/word.model';
+import { Statistic } from '../models/game.model';
 
 class Connection {
 
@@ -19,7 +20,8 @@ class Connection {
             logging: false,
             models: [
                 Category,
-                Word
+                Word,
+                Statistic
             ]
         });
 
