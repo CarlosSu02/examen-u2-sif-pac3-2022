@@ -15,7 +15,6 @@ class GameRoutes {
     initRoutes() {
 
         this.router.get('/ahorcado', gameController.getGameAhorcado);
-        // this.router.post('/ahorcado', gameController.createCategory);
 
     };
 

@@ -1,16 +1,8 @@
 
 import { Word } from "../models/word.model";
 import { validate } from "class-validator";
-import { CreateWordDto } from "../dtos/create_word.dto";
-import categoriesService from "./categories.service";
-import { Category } from "../models/category.model";
 import { Statistic } from "../models/game.model";
-
-interface IWords {
-    categoryName?: string,
-    count: number,
-    results: Word[]
-}
+import { WordPetitionDto } from "../dtos/word_petition.dto";
 
 class GameService {
 
@@ -23,6 +15,38 @@ class GameService {
         
         return searchStatistic.dataValues;
         
+    };
+
+    public validationWord = async (word: WordPetitionDto, progress: string): Promise<WordPetitionDto> => {
+        
+        const errors = await validate(word).then(errors => {
+            
+            if (errors.length > 0) {
+
+                let constraints: any = [];
+
+                errors.forEach(err => {
+
+                    constraints.push({ 
+
+                        'Property': err.property, 
+                        'Errors': err.constraints,
+                        'Message': `Enter a new letter to continue the game! Progress '${progress}'`
+
+                    });
+                  
+                });
+
+                return constraints;
+
+            }
+
+        });
+
+        if (typeof errors !== 'undefined') throw new Error(JSON.stringify(errors)); 
+
+        return word;
+
     };
 
 }

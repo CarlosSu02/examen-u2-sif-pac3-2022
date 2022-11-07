@@ -4,6 +4,8 @@ import categoriesService from '../services/categories.service';
 import wordsService from '../services/words.service';
 import { Statistic } from '../models/game.model';
 import gameService from '../services/game.service';
+import { plainToClass } from 'class-transformer';
+import { WordPetitionDto } from '../dtos/word_petition.dto';
 
 interface IStatistic {
     progress: string,
@@ -19,8 +21,11 @@ class GameController {
     
         try {
 
-            const word = (req.body.word).toLowerCase();
             const statistic = await this.getStatistic();
+
+            const wordFromReq = req.body;
+            const wordValidated: WordPetitionDto = plainToClass(WordPetitionDto, wordFromReq);
+            const word: string = await gameService.validationWord(wordValidated, statistic?.progress!).then(info => (info.word!).toLowerCase());
 
             if (statistic === null) {
 

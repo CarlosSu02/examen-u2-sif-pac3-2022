@@ -51,3 +51,11 @@ El body tiene que ser (estrictamente) el siguiente:
 <br>
 
 ![Game Image](https://github.com/CarlosSu02/examen-u2-sif-pac3-2022/blob/main/game_img_readme.png)
+
+<br>
+
+## Ejemplo de salida de errores
+
+<br>
+
+![Show Errors](https://github.com/CarlosSu02/examen-u2-sif-pac3-2022/blob/main/error_word_game_img_readme.png)
